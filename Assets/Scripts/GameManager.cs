@@ -1,31 +1,44 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public float score;
-    private PlayerController playerControllerScript;
-    public Transform startingPoint;
-    public float lerpSpeed;
-    // Start is called before the first frame update
+    [SerializeField] TextMeshProUGUI scoreText;
+    [SerializeField] PlayerController playerControllerScript;
+    [SerializeField] Transform startingPoint;
+    [SerializeField] float lerpSpeed;
+
+    private int score;
+    private IEnumerator playerIntro;
+
     void Start()
     {
-        playerControllerScript = GameObject.Find("Player").GetComponent<PlayerController>();
         score = 0;
         playerControllerScript.isGameOver = true;
-        StartCoroutine(PlayIntro());
+        if (playerIntro != null)
+        {
+            StopCoroutine(playerIntro);
+        }
+        playerIntro = PlayIntro();
+        StartCoroutine(playerIntro);
+    }
+
+    private void Score()
+    {
+        score++;
+        if (!playerControllerScript.isGameOver)
+        {
+            scoreText.text = "Score: " + score;
+            //Debug.Log("Score: " + score);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        score++;
-        if (!playerControllerScript.isGameOver)
-        {
-            Debug.Log("Score: " + score);
-        }
-        
+        Score();        
     }
 
     IEnumerator PlayIntro()
@@ -36,7 +49,7 @@ public class GameManager : MonoBehaviour
         float startTime = Time.time;
         float distanceCovered = (Time.time - startTime) * lerpSpeed;
         float fractionOfJourney = distanceCovered / journeyLength;
-        playerControllerScript.GetComponent<Animator>().SetFloat("Speed_Multiplier", 0.5f);
+        playerControllerScript.playerAnim.SetFloat("Speed_Multiplier", 0.5f);
         while (fractionOfJourney < 1)
         {
             distanceCovered = (Time.time - startTime) * lerpSpeed;
@@ -44,7 +57,7 @@ public class GameManager : MonoBehaviour
             playerControllerScript.transform.position = Vector3.Lerp(startPos, endPos, fractionOfJourney);
             yield return null;
         }
-        playerControllerScript.GetComponent<Animator>().SetFloat("Speed_Multiplier", 1.0f);
+        playerControllerScript.playerAnim.SetFloat("Speed_Multiplier", 1.0f);
         playerControllerScript.isGameOver = false;
     }
 }

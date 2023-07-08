@@ -4,31 +4,41 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private Rigidbody rb;
-    private Animator playerAnim;
+    [SerializeField] float gravityModifier;
+    [SerializeField] float jumpForce = 10;
+    [SerializeField] float doubleJumpForce;
+    [SerializeField] ParticleSystem explosionParticle;
+    [SerializeField] ParticleSystem dirtParticle;
+
+    public Animator playerAnim { get; private set; }
+    public bool isGameOver { get; set; }
+    public bool doubleSpeed { get; private set; }
+
     private AudioSource playerAudio;
-    public bool doubleSpeed = false;
-    public ParticleSystem explosionParticle;
-    public ParticleSystem dirtParticle;
     public AudioClip jumpSound;
     public AudioClip crashSound;
-    public float gravityModifier;
-    public float jumpForce = 10;
-    public bool isOnGround = true;
-    public bool isGameOver = false;
-    public bool doubleJumpUsed = false;
-    public float doubleJumpForce;
+
+    private bool isOnGround = true;
+    private Rigidbody rb;
+    private bool doubleJumpUsed = false;
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         playerAnim = GetComponent<Animator>();
         playerAudio = GetComponent<AudioSource>();
+        isGameOver = false;
+        doubleSpeed = false;
         Physics.gravity *= gravityModifier;
     }
 
     // Update is called once per frame
     void Update()
+    {
+        PlayerMovement();       
+    }
+
+    private void PlayerMovement()
     {
         if (Input.GetKeyDown(KeyCode.Space) && isOnGround && !isGameOver)
         {
@@ -39,6 +49,7 @@ public class PlayerController : MonoBehaviour
             dirtParticle.Stop();
             doubleJumpUsed = false;
         }
+
         else if (Input.GetKeyDown(KeyCode.Space) && !isOnGround && !doubleJumpUsed)
         {
             doubleJumpUsed = true;
@@ -46,6 +57,7 @@ public class PlayerController : MonoBehaviour
             playerAnim.Play("Running_Jump", 3, 0f);
             playerAudio.PlayOneShot(jumpSound, 1.0f);
         }
+
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             doubleSpeed = true;
@@ -56,6 +68,7 @@ public class PlayerController : MonoBehaviour
             doubleSpeed = false;
             playerAnim.SetFloat("Speed_Multiplier", 1.0f);
         }
+
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -63,9 +76,16 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isOnGround = true;
-            dirtParticle.Play();
+            if (isGameOver)
+            {
+                dirtParticle.Stop();
+            }
+            else
+            {
+                dirtParticle.Play();
+            }
         }
-        else if (collision.gameObject.CompareTag("Obstacle"))
+        else if (collision.gameObject.GetComponent<MoveLeft>())
         {
             Debug.Log("Game Over");
             isGameOver = true;
